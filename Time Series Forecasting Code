@@ -1,0 +1,677 @@
+THE GOOGLE DRIVE LINK:
+https://colab.research.google.com/drive/1m9uzkY95kSD-GbtyT5beB1DAZBDGt-dB?usp=drive_link
+
+
+TIME SERIES FORECASTING CODE & RESULTS:
+
+##YAHOO DATA(5 YEARS ANALYSIS):-
+
+# Step 1: Import Required Libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from statsmodels.tsa.stattools import adfuller
+from sklearn.model_selection import train_test_split
+
+# Step 2: Load Stock Data (from Excel)
+file_path = "yahoo_data.xlsx"  # Update path as needed
+df = pd.read_excel(file_path)
+
+# Step 3: File Paths and Load Datasets
+df.rename(columns=lambda x: x.strip().replace('*', '').replace('**', ''), inplace=True)
+df['Date'] = pd.to_datetime(df['Date'])
+df.set_index('Date', inplace=True)
+df.sort_index(inplace=True)
+
+# Step 4: Returns & Log Returns
+df['Returns'] = df['Close'].pct_change()
+df['Log_Returns'] = np.log(df['Close'] / df['Close'].shift(1))
+
+# Step 5: ADF Stationarity Test
+def adf_test(series, title=''):
+    result = adfuller(series.dropna(), autolag='AIC')
+    print(f'ADF Test for {title}')
+    print(f'Statistic: {result[0]:.4f}')
+    print(f'p-value: {result[1]:.4f}')
+    print(f'Lags Used: {result[2]}')
+    print(f'Critical Values:')
+    for key, value in result[4].items():
+        print(f'   {key}: {value:.4f}')
+    print('Stationary' if result[1] < 0.05 else 'Non-Stationary', end='\n\n')
+
+adf_test(df['Returns'], 'Daily Returns')
+adf_test(df['Log_Returns'], 'Log Returns')
+
+# Step 6: Train-Test Split
+train, test = train_test_split(df, test_size=0.2, shuffle=False)
+
+# Step 7: Moving Average Plotting
+plt.figure(figsize=(12, 6))
+df['Close'].plot(label='Close Price', alpha=0.5)
+df['Close'].rolling(window=20).mean().plot(label='20-Day MA')
+df['Close'].rolling(window=50).mean().plot(label='50-Day MA')
+plt.title('Moving Averages of Close Price')
+plt.legend()
+plt.tight_layout()
+plt.show()
+
+# Step 8: Run EDA for All Datasets
+plt.figure(figsize=(14, 8))
+sns.histplot(df['Returns'].dropna(), bins=50, kde=True)
+plt.title('Distribution of Returns')
+plt.show()
+
+sns.heatmap(df.corr(), annot=True, cmap='coolwarm')
+plt.title('Correlation Heatmap')
+plt.show()
+
+# Step 9: Confirm Execution
+print("✔️ All steps executed successfully.")
+
+
+## LONG TERM TCS DATA ANALYSIS(2004-2024):-
+# Step 1: Import Required Libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from statsmodels.tsa.stattools import adfuller
+from sklearn.model_selection import train_test_split
+
+# Step 2: Load Stock Data (CSV or Excel)
+df = pd.read_csv("TCS Historical Data.csv")
+
+# Step 3: File Paths and Load Datasets
+df.columns = df.columns.str.strip()  # Clean column names
+df['Date'] = pd.to_datetime(df['Date'])  # Convert 'Date' to datetime
+df.set_index('Date', inplace=True)  # Set index as 'Date'
+df.sort_index(inplace=True)  # Sort by date ascending
+
+# Convert numeric columns (in case of commas) to float
+numeric_cols = ['Open', 'High', 'Low']
+df[numeric_cols] = df[numeric_cols].replace(',', '', regex=True).apply(pd.to_numeric, errors='coerce')
+
+# Filter data for long-term analysis (2004–2024)
+df = df.loc['2004-08-26':'2024-06-21']
+
+# Step 4: Returns & Log Returns
+df['Avg_Price'] = (df['Open'] + df['High'] + df['Low']) / 3
+df['Returns'] = df['Avg_Price'].pct_change()
+df['Log_Returns'] = np.log(df['Avg_Price'] / df['Avg_Price'].shift(1))
+
+# Step 5: ADF Stationarity Test
+def adf_test(series, title=''):
+    result = adfuller(series.dropna(), autolag='AIC')
+    print(f"\nADF Test for {title}")
+    print(f"ADF Statistic : {result[0]:.4f}")
+    print(f"p-value       : {result[1]:.4f}")
+    print("Conclusion    :", "Stationary" if result[1] < 0.05 else "Non-Stationary")
+
+adf_test(df['Returns'], 'Returns')
+adf_test(df['Log_Returns'], 'Log Returns')
+
+# Step 6: Train-Test Split
+train, test = train_test_split(df, test_size=0.2, shuffle=False)
+
+# Step 7: Moving Average Plotting
+df['MA50'] = df['Avg_Price'].rolling(50).mean()
+df['MA200'] = df['Avg_Price'].rolling(200).mean()
+
+plt.figure(figsize=(14, 6))
+df['Avg_Price'].plot(label='Average Price')
+df['MA50'].plot(label='50-Day MA')
+df['MA200'].plot(label='200-Day MA')
+plt.title('TCS Long-Term Price & Moving Averages (2004–2024)')
+plt.xlabel('Year')
+plt.ylabel('Price')
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+
+# Step 8: Run EDA for All Datasets
+# Distribution of Returns
+plt.figure(figsize=(10, 5))
+sns.histplot(df['Returns'].dropna(), bins=100, kde=True)
+plt.title("Distribution of Daily Returns (2004–2024)")
+plt.xlabel("Returns")
+plt.ylabel("Frequency")
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+
+# Correlation Heatmap
+plt.figure(figsize=(8, 5))
+sns.heatmap(df[['Open', 'High', 'Low', 'Avg_Price', 'Returns']].corr(), annot=True, cmap='coolwarm')
+plt.title("Correlation Heatmap (2004–2024)")
+plt.tight_layout()
+plt.show()
+
+# Step 9: Confirm Execution
+print("\n✔️ All steps completed successfully for TCS long-term data analysis (2004–2024).")
+
+
+## TCS DATA (2022-2024) FOR SHORT TERM ANALYSIS:-
+# Step 1: Import Required Libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from statsmodels.tsa.stattools import adfuller
+from sklearn.model_selection import train_test_split
+
+# Step 2: Load Stock Data (CSV or Excel)
+df = pd.read_csv("TCS Historical Data.csv")
+
+# Step 3: File Paths and Load Datasets (Clean & Prepare)
+df.columns = df.columns.str.strip()  # Remove extra spaces from column names
+df['Date'] = pd.to_datetime(df['Date'])  # Convert 'Date' to datetime format
+df.set_index('Date', inplace=True)  # Set Date as index
+df.sort_index(inplace=True)  # Sort by date
+
+# Convert numeric columns with commas (if any) to float
+numeric_cols = ['Open', 'High', 'Low']
+df[numeric_cols] = df[numeric_cols].replace(',', '', regex=True).apply(pd.to_numeric, errors='coerce')
+
+# Filter data from 2022 to 2024
+df = df.loc['2022-03-01':'2024-06-21']
+
+# Step 4: Returns & Log Returns (using average price)
+df['Avg_Price'] = (df['Open'] + df['High'] + df['Low']) / 3
+df['Returns'] = df['Avg_Price'].pct_change()
+df['Log_Returns'] = np.log(df['Avg_Price'] / df['Avg_Price'].shift(1))
+
+# Step 5: ADF Stationarity Test
+def adf_test(series, title=''):
+    result = adfuller(series.dropna(), autolag='AIC')
+    print(f"\nADF Test for {title}")
+    print(f"ADF Statistic : {result[0]:.4f}")
+    print(f"p-value       : {result[1]:.4f}")
+    print("Conclusion    :", "Stationary" if result[1] < 0.05 else "Non-Stationary")
+
+adf_test(df['Returns'], 'Returns')
+adf_test(df['Log_Returns'], 'Log Returns')
+
+# Step 6: Train-Test Split
+train, test = train_test_split(df, test_size=0.2, shuffle=False)
+
+# Step 7: Moving Average Plotting
+df['MA20'] = df['Avg_Price'].rolling(20).mean()
+df['MA50'] = df['Avg_Price'].rolling(50).mean()
+
+plt.figure(figsize=(12, 6))
+df['Avg_Price'].plot(label='Average Price')
+df['MA20'].plot(label='20-Day MA')
+df['MA50'].plot(label='50-Day MA')
+plt.title('TCS Average Price & Moving Averages (2022–2024)')
+plt.xlabel('Date')
+plt.ylabel('Price')
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+
+# Step 8: Run EDA for All Datasets
+# Histogram of Returns
+plt.figure(figsize=(10, 5))
+sns.histplot(df['Returns'].dropna(), bins=50, kde=True)
+plt.title("Distribution of Daily Returns")
+plt.xlabel("Returns")
+plt.ylabel("Frequency")
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+
+# Correlation Heatmap
+plt.figure(figsize=(8, 5))
+sns.heatmap(df[['Open', 'High', 'Low', 'Avg_Price', 'Returns']].corr(), annot=True, cmap='coolwarm')
+plt.title("Correlation Heatmap")
+plt.tight_layout()
+plt.show()
+
+# Step 9: Confirm Execution
+print("\n✔️ All steps completed successfully for TCS data (2022–2024).")
+
+ARIMA FORECASTING:
+import pandas as pd
+import matplotlib.pyplot as plt
+from statsmodels.tsa.arima.model import ARIMA
+
+# Step 1: Load the Excel file
+file_path = 'yahoo_data.xlsx'
+df = pd.read_excel(file_path)
+
+# Step 2: Show available columns
+print("Available columns:", df.columns.tolist())
+
+# Step 3: Detect the 'Close' column automatically
+close_col = None
+for col in df.columns:
+    if 'close' in col.lower():
+        close_col = col
+        break
+
+if close_col is None:
+    raise ValueError("No 'Close' column found. Please check the column headers.")
+
+print(f"Using '{close_col}' as the Close column.")
+
+# Step 4: Convert 'Date' to datetime and sort
+df['Date'] = pd.to_datetime(df['Date'])
+df = df.sort_values('Date')
+df.set_index('Date', inplace=True)
+df = df.asfreq('MS')  # Monthly Start frequency
+
+# Step 5: Prepare the time series
+ts = df[close_col].dropna()
+
+# Step 6: Plot original series
+plt.figure(figsize=(12, 5))
+plt.plot(ts, label='Monthly Close Price')
+plt.title('Stock Monthly Close Price (Yahoo Data)')
+plt.xlabel('Date')
+plt.ylabel('Price')
+plt.grid(True)
+plt.legend()
+plt.tight_layout()
+plt.show()
+
+# Step 7: Fit ARIMA model
+model = ARIMA(ts, order=(1, 1, 1))  # You can tune (p,d,q)
+results = model.fit()
+print(results.summary())
+
+# Step 8: Forecast next 12 months
+forecast = results.get_forecast(steps=12)
+forecast_df = forecast.summary_frame()
+
+# Step 9: Plot forecast
+plt.figure(figsize=(12, 5))
+plt.plot(ts, label='Observed')
+plt.plot(forecast_df['mean'], label='Forecast', color='green')
+plt.fill_between(forecast_df.index,
+                 forecast_df['mean_ci_lower'],
+                 forecast_df['mean_ci_upper'],
+                 color='lightgreen', alpha=0.4)
+plt.title("Stock Price Forecast (ARIMA Model)")
+plt.xlabel('Date')
+plt.ylabel('Price')
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+
+import pandas as pd
+import matplotlib.pyplot as plt
+from statsmodels.tsa.arima.model import ARIMA
+
+# Step 1: Load CSV
+df = pd.read_csv('TCS Historical Data.csv')
+
+# Step 2: Clean column names & convert Date
+df.columns = [col.strip() for col in df.columns]
+df['Date'] = pd.to_datetime(df['Date'])
+df = df.sort_values('Date')
+df.set_index('Date', inplace=True)
+df = df.asfreq('MS')  # Monthly Start
+
+# Step 3: Clean the 'Price' column (remove commas, convert to float)
+df['Price'] = df['Price'].astype(str).str.replace(',', '').str.strip()
+df['Price'] = pd.to_numeric(df['Price'], errors='coerce')  # convert and handle 'N/A'
+
+# Drop NaN values after cleaning
+ts = df['Price'].dropna()
+
+# Step 4: Plot last 24 months
+plt.figure(figsize=(10, 4))
+plt.plot(ts[-24:], label='Last 2 Years')
+plt.title('TCS Monthly Closing Price (Cleaned Price)')
+plt.grid(True)
+plt.xlabel('Date')
+plt.ylabel('Price (₹)')
+plt.legend()
+plt.tight_layout()
+plt.show()
+
+# Step 5: Fit ARIMA model
+model = ARIMA(ts, order=(1, 1, 1))
+results = model.fit()
+print(results.summary())
+
+# Step 6: Forecast next 6 months
+forecast = results.get_forecast(steps=6)
+forecast_df = forecast.summary_frame()
+
+# Step 7: Plot forecast
+plt.figure(figsize=(10, 4))
+plt.plot(ts[-24:], label='Observed')
+plt.plot(forecast_df['mean'], label='6-Month Forecast', color='green')
+plt.fill_between(forecast_df.index,
+                 forecast_df['mean_ci_lower'],
+                 forecast_df['mean_ci_upper'],
+                 color='lightgreen', alpha=0.4)
+plt.title("TCS Stock Price Forecast (Next 6 Months)")
+plt.xlabel('Date')
+plt.ylabel('Forecasted Price (₹)')
+plt.grid(True)
+plt.legend()
+plt.tight_layout()
+plt.show()
+
+SARIMA FORECASTING:
+import pandas as pd
+import matplotlib.pyplot as plt
+from statsmodels.tsa.statespace.sarimax import SARIMAX
+
+# Step 1: Load and clean data
+df = pd.read_csv('TCS Historical Data.csv')
+df.columns = [col.strip() for col in df.columns]
+df['Date'] = pd.to_datetime(df['Date'])
+df = df.sort_values('Date')
+df.set_index('Date', inplace=True)
+df = df.asfreq('MS')  # Monthly frequency
+
+# Step 2: Clean 'Price' column
+df['Price'] = df['Price'].astype(str).str.replace(',', '').str.strip()
+df['Price'] = pd.to_numeric(df['Price'], errors='coerce')
+ts = df['Price'].dropna()
+
+# Step 3: Plot full time series
+plt.figure(figsize=(12, 5))
+plt.plot(ts, label='Historical Price')
+plt.title('TCS Monthly Price - Full Series')
+plt.xlabel('Date')
+plt.ylabel('Price (₹)')
+plt.grid(True)
+plt.legend()
+plt.tight_layout()
+plt.show()
+
+# Step 4: Fit SARIMA model (Seasonal ARIMA)
+# Order = (p,d,q), Seasonal_Order = (P,D,Q,s) where s=12 for monthly seasonality
+model = SARIMAX(ts, order=(1, 1, 1), seasonal_order=(1, 1, 1, 12))
+results = model.fit()
+print(results.summary())
+
+# Step 5: Forecast next 12 months (or more)
+n_steps = 12  # Change to 24 for 2 years
+forecast = results.get_forecast(steps=n_steps)
+forecast_df = forecast.summary_frame()
+
+# Step 6: Plot forecast
+plt.figure(figsize=(12, 5))
+plt.plot(ts, label='Observed')
+plt.plot(forecast_df['mean'], label=f'{n_steps}-Month Forecast', color='green')
+plt.fill_between(forecast_df.index,
+                 forecast_df['mean_ci_lower'],
+                 forecast_df['mean_ci_upper'],
+                 color='lightgreen', alpha=0.4)
+plt.title(f"TCS Stock Price Forecast ({n_steps} Months) - SARIMA")
+plt.xlabel('Date')
+plt.ylabel('Price (₹)')
+plt.grid(True)
+plt.legend()
+plt.tight_layout()
+plt.show()
+
+PROPHET FORECASTING:
+# Step 1: Import required libraries
+import pandas as pd
+import matplotlib.pyplot as plt
+from prophet import Prophet
+
+# Step 2: Load the TCS dataset
+df = pd.read_csv('TCS Historical Data.csv')
+
+# Step 3: Clean column names and fix data types
+df.columns = [col.strip() for col in df.columns]  # remove extra spaces
+df['Date'] = pd.to_datetime(df['Date'])           # convert to datetime
+df = df.sort_values('Date')                       # sort ascending by date
+
+# Step 4: Clean 'Price' column (remove commas, handle non-numeric)
+df['Price'] = df['Price'].astype(str).str.replace(',', '').str.strip()
+df['Price'] = pd.to_numeric(df['Price'], errors='coerce')
+
+# Step 5: Prepare data for Prophet
+# Prophet expects two columns: 'ds' (datetime) and 'y' (value to forecast)
+df_prophet = df[['Date', 'Price']].rename(columns={'Date': 'ds', 'Price': 'y'})
+df_prophet = df_prophet.dropna()
+
+# Step 6: Visualize the time series
+plt.figure(figsize=(12,5))
+plt.plot(df_prophet['ds'], df_prophet['y'])
+plt.title('TCS Stock Price Over Time')
+plt.xlabel('Date')
+plt.ylabel('Price (₹)')
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+
+# Step 7: Initialize and configure the Prophet model
+model = Prophet(
+    yearly_seasonality=True,  # Enable yearly pattern
+    weekly_seasonality=False,
+    daily_seasonality=False,
+    seasonality_mode='additive'  # Can change to 'multiplicative' if trend increases with value
+)
+
+# Step 8: Fit the model on historical data
+model.fit(df_prophet)
+
+# Step 9: Create future dataframe (e.g., forecast next 12 months = 365 days)
+future = model.make_future_dataframe(periods=365, freq='D')  # daily forecasts for 1 year
+
+# Step 10: Forecast
+forecast = model.predict(future)
+
+# Step 11: Plot forecast
+fig1 = model.plot(forecast)
+plt.title('TCS Stock Price Forecast - Prophet Model')
+plt.xlabel('Date')
+plt.ylabel('Predicted Price (₹)')
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+
+# Step 12: Plot components (trend, yearly seasonality)
+fig2 = model.plot_components(forecast)
+plt.tight_layout()
+plt.show()
+
+# Optional: Display last few forecasted rows
+forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail()
+
+LSTM FORECASTING:
+# Step 1: Import necessary libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import MinMaxScaler
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dense, Dropout
+
+# Step 2: Load the dataset
+df = pd.read_csv('TCS Historical Data.csv')
+
+# Step 3: Clean and prepare the 'Price' column
+df.columns = [col.strip() for col in df.columns]
+df['Date'] = pd.to_datetime(df['Date'])
+df = df.sort_values('Date')
+df['Price'] = df['Price'].astype(str).str.replace(',', '').str.strip()
+df['Price'] = pd.to_numeric(df['Price'], errors='coerce')
+
+# Step 4: Filter and interpolate missing data
+data = df[['Date', 'Price']].dropna()
+data.set_index('Date', inplace=True)
+data = data.asfreq('D')  # Use daily frequency
+data['Price'] = data['Price'].interpolate()  # Fill missing days
+
+# Step 5: Normalize the 'Price' values
+scaler = MinMaxScaler(feature_range=(0, 1))
+scaled_data = scaler.fit_transform(data[['Price']])
+
+# Step 6: Create sequences for LSTM input
+def create_sequences(data, window_size):
+    X, y = [], []
+    for i in range(window_size, len(data)):
+        X.append(data[i - window_size:i, 0])
+        y.append(data[i, 0])
+    return np.array(X), np.array(y)
+
+window_size = 60  # Use last 60 days to predict next day
+X, y = create_sequences(scaled_data, window_size)
+
+# Step 7: Split into training and testing data (e.g., 80-20 split)
+split = int(0.8 * len(X))
+X_train, X_test = X[:split], X[split:]
+y_train, y_test = y[:split], y[split:]
+
+# Reshape for LSTM input: [samples, time_steps, features]
+X_train = X_train.reshape(X_train.shape[0], X_train.shape[1], 1)
+X_test = X_test.reshape(X_test.shape[0], X_test.shape[1], 1)
+
+# Step 8: Build the LSTM model
+model = Sequential([
+    LSTM(50, return_sequences=True, input_shape=(X_train.shape[1], 1)),
+    Dropout(0.2),
+    LSTM(50, return_sequences=False),
+    Dropout(0.2),
+    Dense(1)
+])
+
+model.compile(optimizer='adam', loss='mean_squared_error')
+model.summary()
+
+# Step 9: Train the model
+history = model.fit(X_train, y_train, epochs=20, batch_size=32, validation_data=(X_test, y_test))
+
+# Step 10: Predict on test data
+predicted_prices = model.predict(X_test)
+predicted_prices = scaler.inverse_transform(predicted_prices.reshape(-1, 1))
+
+# Step 11: Inverse scale actual values
+actual_prices = scaler.inverse_transform(y_test.reshape(-1, 1))
+
+# Step 12: Plot actual vs predicted
+plt.figure(figsize=(12, 6))
+plt.plot(actual_prices, label='Actual Price')
+plt.plot(predicted_prices, label='Predicted Price')
+plt.title('TCS Stock Price Prediction with LSTM')
+plt.xlabel('Days')
+plt.ylabel('Price (₹)')
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+
+# Step 13: Future forecast (e.g., next 30 days)
+last_sequence = scaled_data[-window_size:]
+future_prices = []
+
+for _ in range(30):  # Predict next 30 days
+    input_seq = last_sequence.reshape(1, window_size, 1)
+    pred = model.predict(input_seq)[0, 0]
+    future_prices.append(pred)
+    last_sequence = np.append(last_sequence[1:], [[pred]], axis=0)
+
+# Inverse scale future predictions
+future_prices = scaler.inverse_transform(np.array(future_prices).reshape(-1, 1))
+
+# Step 14: Plot future forecast
+plt.figure(figsize=(10, 5))
+plt.plot(future_prices, label='Next 30 Days Forecast')
+plt.title('TCS Stock Price - Future Forecast (LSTM)')
+plt.xlabel('Days Ahead')
+plt.ylabel('Price (₹)')
+plt.grid(True)
+plt.legend()
+plt.tight_layout()
+plt.show()
+Model: "sequential"
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓
+┃ Layer (type)                    ┃ Output Shape           ┃       Param # ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩
+│ lstm (LSTM)                     │ (None, 60, 50)         │        10,400 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ dropout (Dropout)               │ (None, 60, 50)         │             0 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ lstm_1 (LSTM)                   │ (None, 50)             │        20,200 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ dropout_1 (Dropout)             │ (None, 50)             │             0 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ dense (Dense)                   │ (None, 1)              │            51 │
+└─────────────────────────────────┴────────────────────────┴───────────────┘
+ Total params: 30,651 (119.73 KB)
+ Trainable params: 30,651 (119.73 KB)
+ Non-trainable params: 0 (0.00 B)
+Epoch 1/20
+180/180 ━━━━━━━━━━━━━━━━━━━━ 16s 63ms/step - loss: 0.0060 - val_loss: 4.3577e-04
+Epoch 2/20
+180/180 ━━━━━━━━━━━━━━━━━━━━ 21s 64ms/step - loss: 5.8465e-04 - val_loss: 0.0011
+Epoch 3/20
+180/180 ━━━━━━━━━━━━━━━━━━━━ 11s 61ms/step - loss: 4.7039e-04 - val_loss: 9.9038e-04
+Epoch 4/20
+180/180 ━━━━━━━━━━━━━━━━━━━━ 23s 73ms/step - loss: 3.8924e-04 - val_loss: 7.8268e-04
+Epoch 5/20
+180/180 ━━━━━━━━━━━━━━━━━━━━ 12s 65ms/step - loss: 3.4307e-04 - val_loss: 0.0014
+Epoch 6/20
+180/180 ━━━━━━━━━━━━━━━━━━━━ 11s 63ms/step - loss: 3.4130e-04 - val_loss: 5.3400e-04
+Epoch 7/20
+180/180 ━━━━━━━━━━━━━━━━━━━━ 20s 61ms/step - loss: 2.7101e-04 - val_loss: 0.0012
+Epoch 8/20
+180/180 ━━━━━━━━━━━━━━━━━━━━ 12s 64ms/step - loss: 3.1552e-04 - val_loss: 0.0020
+Epoch 9/20
+180/180 ━━━━━━━━━━━━━━━━━━━━ 20s 63ms/step - loss: 2.9686e-04 - val_loss: 8.9089e-04
+Epoch 10/20
+180/180 ━━━━━━━━━━━━━━━━━━━━ 20s 58ms/step - loss: 2.5910e-04 - val_loss: 3.5261e-04
+Epoch 11/20
+180/180 ━━━━━━━━━━━━━━━━━━━━ 21s 63ms/step - loss: 2.5461e-04 - val_loss: 8.2900e-04
+Epoch 12/20
+180/180 ━━━━━━━━━━━━━━━━━━━━ 21s 64ms/step - loss: 2.5329e-04 - val_loss: 0.0016
+Epoch 13/20
+180/180 ━━━━━━━━━━━━━━━━━━━━ 19s 57ms/step - loss: 2.4155e-04 - val_loss: 4.4189e-04
+Epoch 14/20
+180/180 ━━━━━━━━━━━━━━━━━━━━ 21s 62ms/step - loss: 2.1576e-04 - val_loss: 0.0012
+Epoch 15/20
+180/180 ━━━━━━━━━━━━━━━━━━━━ 21s 63ms/step - loss: 2.0609e-04 - val_loss: 5.3030e-04
+Epoch 16/20
+180/180 ━━━━━━━━━━━━━━━━━━━━ 11s 62ms/step - loss: 1.8431e-04 - val_loss: 8.1956e-04
+Epoch 17/20
+180/180 ━━━━━━━━━━━━━━━━━━━━ 20s 61ms/step - loss: 2.0792e-04 - val_loss: 4.2884e-04
+Epoch 18/20
+180/180 ━━━━━━━━━━━━━━━━━━━━ 21s 63ms/step - loss: 2.0207e-04 - val_loss: 5.7295e-04
+Epoch 19/20
+180/180 ━━━━━━━━━━━━━━━━━━━━ 20s 58ms/step - loss: 2.2563e-04 - val_loss: 2.5258e-04
+Epoch 20/20
+180/180 ━━━━━━━━━━━━━━━━━━━━ 9s 52ms/step - loss: 2.1879e-04 - val_loss: 0.0022
+45/45 ━━━━━━━━━━━━━━━━━━━━ 2s 41ms/step
+
+1/1 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step
+1/1 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step
+1/1 ━━━━━━━━━━━━━━━━━━━━ 0s 49ms/step
+1/1 ━━━━━━━━━━━━━━━━━━━━ 0s 41ms/step
+1/1 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step
+1/1 ━━━━━━━━━━━━━━━━━━━━ 0s 43ms/step
+1/1 ━━━━━━━━━━━━━━━━━━━━ 0s 43ms/step
+1/1 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step
+1/1 ━━━━━━━━━━━━━━━━━━━━ 0s 44ms/step
+1/1 ━━━━━━━━━━━━━━━━━━━━ 0s 41ms/step
+1/1 ━━━━━━━━━━━━━━━━━━━━ 0s 43ms/step
+1/1 ━━━━━━━━━━━━━━━━━━━━ 0s 43ms/step
+1/1 ━━━━━━━━━━━━━━━━━━━━ 0s 41ms/step
+1/1 ━━━━━━━━━━━━━━━━━━━━ 0s 43ms/step
+1/1 ━━━━━━━━━━━━━━━━━━━━ 0s 43ms/step
+1/1 ━━━━━━━━━━━━━━━━━━━━ 0s 41ms/step
+1/1 ━━━━━━━━━━━━━━━━━━━━ 0s 44ms/step
+1/1 ━━━━━━━━━━━━━━━━━━━━ 0s 56ms/step
+1/1 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step
+1/1 ━━━━━━━━━━━━━━━━━━━━ 0s 41ms/step
+1/1 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step
+1/1 ━━━━━━━━━━━━━━━━━━━━ 0s 43ms/step
+1/1 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step
+1/1 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step
+1/1 ━━━━━━━━━━━━━━━━━━━━ 0s 43ms/step
+1/1 ━━━━━━━━━━━━━━━━━━━━ 0s 45ms/step
+1/1 ━━━━━━━━━━━━━━━━━━━━ 0s 44ms/step
+1/1 ━━━━━━━━━━━━━━━━━━━━ 0s 55ms/step
